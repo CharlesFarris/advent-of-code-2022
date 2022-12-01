@@ -42,12 +42,10 @@ let sumList = List.fold sumFun elfList data
 
 sumList |> List.iter (fun current -> printfn "Id: %i Calories: %i" current.Id current.Calories )
 
-let findMax (acc: ElfCalories ) (elem: ElfCalories) =
-    if acc.Calories < elem.Calories then
-        elem
-    else
-        acc
+let sumMaxThree = sumList |>
+                  List.sortBy (fun elem -> elem.Calories) |>
+                  List.rev |>
+                  List.take 3 |>
+                  List.sumBy (fun elem -> elem.Calories)
 
-let max = List.fold findMax { Id = 0; Calories = 0 } sumList
-
-printfn "Max: Id: %i Calories: %i" max.Id max.Calories
+printfn "Sum of max 3: %i" sumMaxThree
