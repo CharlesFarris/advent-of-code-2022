@@ -1,7 +1,10 @@
-﻿open System.IO
+﻿open System
+open System.IO
     
 let rucksacks =
     File.ReadLines ".\part1_data.txt" |> List.ofSeq
+    
+let groups = rucksacks |> Seq.chunkBySize 3
 
 let computePriority (c: char) : int =
     if ('a' <= c && c <= 'z') then
@@ -11,20 +14,12 @@ let computePriority (c: char) : int =
     else
         0
 
-let analyzeCompartments (sum: int) (line: string) =
-    let size = line.Length / 2
-    let left = line[.. (size - 1)]
-    let right = line[size..]
-    printfn "%s %s %s" line left right
-
-    let matches =
-        String.filter right.Contains left |> Seq.toList |> List.distinct
-
-    List.iter (fun c -> printfn "%c" c) matches
-
-    List.fold (fun newSum c -> newSum + (computePriority c)) sum matches
+let findBadgePriority (lines : string[]) : int =
+    let matchesToSecond = String.filter lines[1].Contains lines[0] |> Seq.toList |> List.distinct |> Array.ofSeq |> String
+    let matchesToThird = String.filter lines[2].Contains matchesToSecond |> Seq.toList |> List.distinct
+    matchesToThird[0] |> computePriority
 
 let sum =
-    List.fold analyzeCompartments 0 rucksacks
+    List.fold (fun sum group -> sum + findBadgePriority group) 0 (groups |> Seq.toList)
 
 printfn "Sum: %i" sum
