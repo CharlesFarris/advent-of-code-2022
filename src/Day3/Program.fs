@@ -1,10 +1,7 @@
-﻿let rucksacks: string list =
-    [ "vJrwpWtwJgWrhcsFMMfFFhFp"
-      "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
-      "PmmdzqPrVvPwwTWBwg"
-      "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
-      "ttgJtRGJQctTZtZT"
-      "CrZsJsPPZsGzwwsLwLmpwMDw" ]
+﻿open System.IO
+    
+let rucksacks =
+    File.ReadLines ".\part1_data.txt" |> List.ofSeq
 
 let computePriority (c: char) : int =
     if ('a' <= c && c <= 'z') then

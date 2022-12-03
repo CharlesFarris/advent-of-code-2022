@@ -6,11 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Program.fs"/>
+        <Compile Include="Program.fs" />
+        <Content Include="part1_data.txt" CopyToOutputDirectory="Always"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Common\Common.fsproj"/>
+        <ProjectReference Include="..\Common\Common.fsproj" />
     </ItemGroup>
 
 </Project>
