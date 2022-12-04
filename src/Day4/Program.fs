@@ -10,6 +10,10 @@ type Range = {
 
 let fullyContains (left:Range ) (right:Range) =
     (left.Start <= right.Start && right.End <= left.End) || (right.Start <= left.Start && left.End <= right.End)
+    
+let intersect (left:Range) (right: Range) =
+    (left.End >= right.Start) && (right.End >= left.Start);
+    
 
 let parseRange (line:string) =
     let tokens = line.Split '-'
@@ -23,7 +27,7 @@ let parseLine (line:string) =
     
 let checkAssignments (sum: int) (line:string) =
     let ranges = parseLine line
-    if fullyContains ranges[0] ranges[1] then
+    if intersect ranges[0] ranges[1] then
         sum + 1
     else
         sum
