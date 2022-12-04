@@ -1,10 +1,7 @@
-﻿let sectionAssignments: string list =
-    [ "2-4,6-8"
-      "2-3,4-5"
-      "5-7,7-9"
-      "2-8,3-7"
-      "6-6,4-6"
-      "2-6,4-8" ]
+﻿open System.IO
+
+let sectionAssignments =
+    File.ReadLines ".\part1_data.txt" |> List.ofSeq
    
 type Range = {
     Start: int
