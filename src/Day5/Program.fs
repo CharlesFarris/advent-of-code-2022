@@ -34,6 +34,7 @@ let stackMap = List.foldBack parseStackLine stackLines stacks
 type Move = {
     Source: int
     Target: int
+    Offset: int
 }
 
 let expandMoveLine (acc: Move list) (line : string) =
@@ -41,14 +42,14 @@ let expandMoveLine (acc: Move list) (line : string) =
     let count = tokens[1] |> Int32.Parse
     let source = tokens[3] |> Int32.Parse
     let target = tokens[5] |> Int32.Parse
-    List.append acc [for _ in 1..count -> {Source = source; Target = target}]
+    List.append acc [for i in 1..count -> {Source = source; Target = target; Offset = count - i}]
     
 let moves = List.fold expandMoveLine [] moveLines
 
 let moveStack (acc: string list list) (move: Move) = 
     let sourceStack = acc[move.Source - 1]
-    let crate = sourceStack[0]
-    let newSourceStack = List.tail sourceStack
+    let crate = sourceStack[move.Offset]
+    let newSourceStack = List.removeAt move.Offset sourceStack
     let targetStack = acc[move.Target - 1]
     let newTargetStack = List.append [ crate ] targetStack
     [for i in 1..acc.Length ->
