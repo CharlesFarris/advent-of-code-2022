@@ -1,15 +1,8 @@
 ﻿open System
+open System.IO
 
-let data: string list =
-    [ "    [D]     "
-      "[N] [C]     "
-      "[Z] [M] [P] "
-      " 1   2   3 "
-      " "
-      "move 1 from 2 to 1 "
-      "move 3 from 1 to 3 "
-      "move 2 from 2 to 1 "
-      "move 1 from 1 to 2 " ]
+let data =
+    File.ReadLines ".\part1_data.txt" |> List.ofSeq
 
 let index =
     List.findIndex (String.IsNullOrWhiteSpace) data
@@ -19,8 +12,7 @@ List.iter (fun l -> printfn "%s" l) stackLines
 let moveLines = data[(index + 1) ..]
 List.iter (fun l -> printfn "%s" l) moveLines
 
-let numberOfStacks =
-    ((stackLines |> List.last).Length - 2) / 3
+let numberOfStacks = ((List.last stackLines).Split [| ' ' |] ).Length
 
 printfn "Stacks: %i" numberOfStacks
 
