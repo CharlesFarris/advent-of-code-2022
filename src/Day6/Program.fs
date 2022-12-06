@@ -2,8 +2,8 @@
 
 let signal = ".\part1_data.txt" |> File.ReadAllText 
 
-let chunks = [ for i in 0..(signal.Length - 4) -> signal[i..(i+3)] ] 
+let chunks = [ for i in 0..(signal.Length - 14) -> signal[i..(i+13)] ] 
 
-let index = chunks |> List.findIndex (fun chunk -> (chunk |> Seq.toList |> List.distinct).Length = 4)
+let index = chunks |> List.findIndex (fun chunk -> (chunk |> Seq.toList |> List.distinct).Length = 14)
 
-printfn "Index: %i" (index + 4)
+printfn "Index: %i" (index + 14)
