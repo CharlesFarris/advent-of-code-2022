@@ -1,4 +1,6 @@
-﻿let signal = "mjqjpqmgbljsphdztnvjfqwrcgsmlb"
+﻿open System.IO
+
+let signal = ".\part1_data.txt" |> File.ReadAllText 
 
 let chunks = [ for i in 0..(signal.Length - 4) -> signal[i..(i+3)] ] 
 

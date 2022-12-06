@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="Program.fs" />
+    <Content Include="part1_data.txt" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>
