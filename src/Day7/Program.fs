@@ -1,7 +1,7 @@
 ﻿open System.IO
 
 let input =
-    ".\\test_data.txt"
+    ".\\part1_data.txt"
     |> File.ReadAllLines
     |> Seq.toList
 
@@ -27,8 +27,13 @@ let handleChangeDirectory (name: string) (state: State) : State =
             CurrentDirectory =
                 state.Directories[state.CurrentDirectory]
                     .ParentName }
-    | _ -> { state with CurrentDirectory = name }
-
+    | _ ->
+        { state with
+            CurrentDirectory =
+                match state.CurrentDirectory with
+                | "" -> name
+                | "/" -> sprintf "%s%s" state.CurrentDirectory name
+                | _ -> sprintf "%s/%s" state.CurrentDirectory name }
 
 let handleListDirectory (state: State) : State = state
 
@@ -41,16 +46,24 @@ let addDirectory (name: string) (state: State) : State =
             + 1
 
     let directory =
-        { Name = name
+        { Name =
+            if state.CurrentDirectory = "/" then
+                sprintf "/%s" name
+            else
+                sprintf "%s/%s" state.CurrentDirectory name
           ParentName = state.CurrentDirectory
           Depth = depth }
 
-    { state with Directories = state.Directories.Add(name, directory) }
+    { state with Directories = state.Directories.Add(directory.Name, directory) }
 
 let addFile (size: string) (name: string) (state: State) : State =
     let file =
         { DirectoryName = state.CurrentDirectory
-          Name = name
+          Name =
+            if state.CurrentDirectory = "/" then
+                sprintf "/%s" name
+            else
+                sprintf "%s/%s" state.CurrentDirectory name
           Size = int size }
 
     { state with Files = (state.Files |> List.append [ file ]) }
@@ -113,8 +126,13 @@ let updateParentDirectorySize (map: Map<string, int>) (directory: Directory) =
             | None -> None)
     )
 
-let totalDirectorySizes = List.fold updateParentDirectorySize directorySizes sortedDirectories
+let totalDirectorySizes =
+    List.fold updateParentDirectorySize directorySizes sortedDirectories
 
-let sum = totalDirectorySizes.Values |> Seq.toList |> List.filter (fun size -> size <= 100000) |> List.sum
+let sum =
+    totalDirectorySizes.Values
+    |> Seq.toList
+    |> List.filter (fun size -> size <= 100000)
+    |> List.sum
 
 printfn "Sum: %i" sum
