@@ -135,4 +135,19 @@ let sum =
     |> List.filter (fun size -> size <= 100000)
     |> List.sum
 
-printfn "Sum: %i" sum
+let totalDiskSpace = 70000000
+let requiredSpace = 30000000
+
+let currentSpace =
+    totalDiskSpace - totalDirectorySizes["/"]
+
+let neededSpace =
+    requiredSpace - currentSpace
+
+let minimumDirectorySize =
+    totalDirectorySizes.Values
+    |> Seq.toList
+    |> List.filter (fun size -> neededSpace <= size)
+    |> List.min
+
+printfn "Directory Size: %i" minimumDirectorySize
