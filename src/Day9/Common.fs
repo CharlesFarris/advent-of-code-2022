@@ -8,16 +8,15 @@ module Point =
     let Zero = { X = 0; Y = 0 }
 
 type State =
-    { Head: Point
-      Tail: Point
+    { Knots: Point list
       History: Point list }
 
-type Offset = { X: int; Y: int }
+type Offset = { DX: int; DY: int }
 
 module Offset =
     let computeOffset (head: Point) (tail: Point) : Offset =
-        { X = head.X - tail.X
-          Y = head.Y - tail.Y }
+        { DX = head.X - tail.X
+          DY = head.Y - tail.Y }
 
 module Move =
     let parseMove (moves: Move list) (line: string) : Move list =
@@ -33,43 +32,56 @@ module Move =
         | "U" -> { head with Y = head.Y + 1 }
         | "D" -> { head with Y = head.Y - 1 }
         | _ -> head
-        
+
     let moveTail (head: Point) (tail: Point) : Point =
         let offset = Offset.computeOffset head tail
+
         match offset with
-        | { X = 0; Y = 0 } -> tail
-        | { X = 1; Y = 0 } -> tail
-        | { X = -1; Y = 0 } -> tail
-        | { X = 0; Y = 1 } -> tail
-        | { X = 0; Y = -1 } -> tail
-        | { X = 1; Y = 1 } -> tail
-        | { X = -1; Y = 1 } -> tail
-        | { X = 1; Y = -1 } -> tail
-        | { X = -1; Y = -1 } -> tail
+        | { DX = 0; DY = 0 } -> tail
+        | { DX = 1; DY = 0 } -> tail
+        | { DX = -1; DY = 0 } -> tail
+        | { DX = 0; DY = 1 } -> tail
+        | { DX = 0; DY = -1 } -> tail
+        | { DX = 1; DY = 1 } -> tail
+        | { DX = -1; DY = 1 } -> tail
+        | { DX = 1; DY = -1 } -> tail
+        | { DX = -1; DY = -1 } -> tail
 
-        | { X = 2; Y = 0 } -> { tail with X = tail.X + 1 }
-        | { X = -2; Y = 0 } -> { tail with X = tail.X - 1 }
-        | { X = 0; Y = 2 } -> { tail with Y = tail.Y + 1 }
-        | { X = 0; Y = -2 } -> { tail with Y = tail.Y - 1 }
+        | { DX = 2; DY = 0 } -> { tail with X = tail.X + 1 }
+        | { DX = -2; DY = 0 } -> { tail with X = tail.X - 1 }
+        | { DX = 0; DY = 2 } -> { tail with Y = tail.Y + 1 }
+        | { DX = 0; DY = -2 } -> { tail with Y = tail.Y - 1 }
 
-        | { X = 1; Y = 2 } -> { X = tail.X + 1; Y = tail.Y + 1 }
-        | { X = 2; Y = 1 } -> { X = tail.X + 1; Y = tail.Y + 1 }
+        | { DX = 1; DY = 2 } -> { X = tail.X + 1; Y = tail.Y + 1 }
+        | { DX = 2; DY = 2 } -> { X = tail.X + 1; Y = tail.Y + 1 }
+        | { DX = 2; DY = 1 } -> { X = tail.X + 1; Y = tail.Y + 1 }
 
-        | { X = 1; Y = -2 } -> { X = tail.X + 1; Y = tail.Y - 1 }
-        | { X = 2; Y = -1 } -> { X = tail.X + 1; Y = tail.Y - 1 }
+        | { DX = 1; DY = -2 } -> { X = tail.X + 1; Y = tail.Y - 1 }
+        | { DX = 2; DY = -2 } -> { X = tail.X + 1; Y = tail.Y - 1 }
+        | { DX = 2; DY = -1 } -> { X = tail.X + 1; Y = tail.Y - 1 }
 
-        | { X = -1; Y = -2 } -> { X = tail.X - 1; Y = tail.Y - 1 }
-        | { X = -2; Y = -1 } -> { X = tail.X - 1; Y = tail.Y - 1 }
+        | { DX = -1; DY = -2 } -> { X = tail.X - 1; Y = tail.Y - 1 }
+        | { DX = -2; DY = -2 } -> { X = tail.X - 1; Y = tail.Y - 1 }
+        | { DX = -2; DY = -1 } -> { X = tail.X - 1; Y = tail.Y - 1 }
 
-        | { X = -1; Y = 2 } -> { X = tail.X - 1; Y = tail.Y + 1 }
-        | { X = -2; Y = 1 } -> { X = tail.X - 1; Y = tail.Y + 1 }
+        | { DX = -1; DY = 2 } -> { X = tail.X - 1; Y = tail.Y + 1 }
+        | { DX = -2; DY = 2 } -> { X = tail.X - 1; Y = tail.Y + 1 }
+        | { DX = -2; DY = 1 } -> { X = tail.X - 1; Y = tail.Y + 1 }
 
-        | { X = _; Y = _ } -> tail        
-        
+        | { DX = _; DY = _ } -> tail
+
+    let moveKnots (knots: Point list) (move: Move) : Point list =
+        knots
+        |> List.fold
+            (fun acc elem ->
+                if acc.Length = 0 then
+                    List.append acc [ moveHead elem move ]
+                else
+                    List.append acc [ moveTail (List.last acc) elem ])
+            []
+
     let handleMove (state: State) (move: Move) : State =
-        let newHead = moveHead state.Head move
-        let newTail = moveTail newHead state.Tail
+        let knots = moveKnots state.Knots move
 
-        { Head = newHead
-          Tail = newTail
-          History = List.append state.History [ newTail ] }
+        { Knots = knots
+          History = List.append state.History [ knots |> List.last ] }

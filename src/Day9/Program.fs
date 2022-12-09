@@ -7,10 +7,8 @@ let moves =
     |> Seq.toList
     |> List.fold Move.parseMove []
 
-
 let initialState =
-    { Head = Point.Zero 
-      Tail = Point.Zero
+    { Knots = [ for i in 1..10 -> Point.Zero ]
       History = [ Point.Zero ] }
 
 let finalState = moves |> List.fold Move.handleMove initialState
