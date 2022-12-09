@@ -6,9 +6,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Common.fs"/>
         <Compile Include="Program.fs"/>
         <Content Include="test_data.txt" CopyToOutputDirectory="Always"/>
         <Content Include="part1_data.txt" CopyToOutputDirectory="Always"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Day5\Day5.fsproj"/>
     </ItemGroup>
 
 </Project>
