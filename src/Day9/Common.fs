@@ -26,50 +26,49 @@ module Move =
         let count = int tokens[1]
         List.append moves [ for i in 1..count -> { Direction = direction; Count = 1 } ]
 
+    let moveHead (head: Point) (move: Move) : Point =
+        match move.Direction with
+        | "R" -> { head with X = head.X + 1 }
+        | "L" -> { head with X = head.X - 1 }
+        | "U" -> { head with Y = head.Y + 1 }
+        | "D" -> { head with Y = head.Y - 1 }
+        | _ -> head
+        
+    let moveTail (head: Point) (tail: Point) : Point =
+        let offset = Offset.computeOffset head tail
+        match offset with
+        | { X = 0; Y = 0 } -> tail
+        | { X = 1; Y = 0 } -> tail
+        | { X = -1; Y = 0 } -> tail
+        | { X = 0; Y = 1 } -> tail
+        | { X = 0; Y = -1 } -> tail
+        | { X = 1; Y = 1 } -> tail
+        | { X = -1; Y = 1 } -> tail
+        | { X = 1; Y = -1 } -> tail
+        | { X = -1; Y = -1 } -> tail
+
+        | { X = 2; Y = 0 } -> { tail with X = tail.X + 1 }
+        | { X = -2; Y = 0 } -> { tail with X = tail.X - 1 }
+        | { X = 0; Y = 2 } -> { tail with Y = tail.Y + 1 }
+        | { X = 0; Y = -2 } -> { tail with Y = tail.Y - 1 }
+
+        | { X = 1; Y = 2 } -> { X = tail.X + 1; Y = tail.Y + 1 }
+        | { X = 2; Y = 1 } -> { X = tail.X + 1; Y = tail.Y + 1 }
+
+        | { X = 1; Y = -2 } -> { X = tail.X + 1; Y = tail.Y - 1 }
+        | { X = 2; Y = -1 } -> { X = tail.X + 1; Y = tail.Y - 1 }
+
+        | { X = -1; Y = -2 } -> { X = tail.X - 1; Y = tail.Y - 1 }
+        | { X = -2; Y = -1 } -> { X = tail.X - 1; Y = tail.Y - 1 }
+
+        | { X = -1; Y = 2 } -> { X = tail.X - 1; Y = tail.Y + 1 }
+        | { X = -2; Y = 1 } -> { X = tail.X - 1; Y = tail.Y + 1 }
+
+        | { X = _; Y = _ } -> tail        
+        
     let handleMove (state: State) (move: Move) : State =
-        let head = state.Head
-
-        let newHead =
-            match move.Direction with
-            | "R" -> { head with X = head.X + 1 }
-            | "L" -> { head with X = head.X - 1 }
-            | "U" -> { head with Y = head.Y + 1 }
-            | "D" -> { head with Y = head.Y - 1 }
-            | _ -> head
-
-        let tail = state.Tail
-        let offset = Offset.computeOffset newHead tail
-
-        let newTail =
-            match offset with
-            | { X = 0; Y = 0 } -> tail
-            | { X = 1; Y = 0 } -> tail
-            | { X = -1; Y = 0 } -> tail
-            | { X = 0; Y = 1 } -> tail
-            | { X = 0; Y = -1 } -> tail
-            | { X = 1; Y = 1 } -> tail
-            | { X = -1; Y = 1 } -> tail
-            | { X = 1; Y = -1 } -> tail
-            | { X = -1; Y = -1 } -> tail
-
-            | { X = 2; Y = 0 } -> { tail with X = tail.X + 1 }
-            | { X = -2; Y = 0 } -> { tail with X = tail.X - 1 }
-            | { X = 0; Y = 2 } -> { tail with Y = tail.Y + 1 }
-            | { X = 0; Y = -2 } -> { tail with Y = tail.Y - 1 }
-
-            | { X = 1; Y = 2 } -> { X = tail.X + 1; Y = tail.Y + 1 }
-            | { X = 2; Y = 1 } -> { X = tail.X + 1; Y = tail.Y + 1 }
-
-            | { X = 1; Y = -2 } -> { X = tail.X + 1; Y = tail.Y - 1 }
-            | { X = 2; Y = -1 } -> { X = tail.X + 1; Y = tail.Y - 1 }
-
-            | { X = -1; Y = -2 } -> { X = tail.X - 1; Y = tail.Y - 1 }
-            | { X = -2; Y = -1 } -> { X = tail.X - 1; Y = tail.Y - 1 }
-
-            | { X = -1; Y = 2 } -> { X = tail.X - 1; Y = tail.Y + 1 }
-            | { X = -2; Y = 1 } -> { X = tail.X - 1; Y = tail.Y + 1 }
-
-            | { X = _; Y = _ } -> tail
+        let newHead = moveHead state.Head move
+        let newTail = moveTail newHead state.Tail
 
         { Head = newHead
           Tail = newTail
