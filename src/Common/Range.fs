@@ -1,4 +1,4 @@
-﻿namespace Common
+﻿module Range
 
 type Range1d = { Start: int; End: int }
 

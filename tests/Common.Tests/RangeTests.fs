@@ -1,6 +1,7 @@
 module Common.Tests
 
 open NUnit.Framework
+open Range
 
 [<Test>]
 let create_ValidatesBehavior () =

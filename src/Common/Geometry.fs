@@ -1,4 +1,4 @@
-﻿module Common.Geometry_Types
+﻿module Geometry
 
 type Offset2d = { DeltaX: int; DeltaY: int }
 
