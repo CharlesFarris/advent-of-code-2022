@@ -1,4 +1,5 @@
 ﻿open System.IO
+open Range
 
 let instructions =
     ".\\part1_data.txt"
@@ -8,13 +9,15 @@ let instructions =
 type State = {
     Cycle : int
     X : int
-    SignalStrengths: int list
+    Current: string
+    Lines: string list
 }
 
 let initialState = {
     Cycle = 1
     X = 1
-    SignalStrengths = []
+    Current = ""
+    Lines = []
 }
 
 let simplifyInstruction (acc: string list) (line: string) : string list =
@@ -33,26 +36,30 @@ let executeInstruction (state: State) (line: string) : State =
                 | "noop" -> state.X
                 | "add" -> state.X + int tokens[1]
                 | _ -> invalidOp tokens[0]
-        
-    let newSignalStrengths =
-        if newCycle = 20 then
-            List.append state.SignalStrengths [ newX * newCycle ]
-        elif (newCycle - 20) % 40 = 0 then
-            List.append state.SignalStrengths [ newX * newCycle ]
+    let sprite = Range1d.create (state.X - 1) (state.X + 1)
+    let pixel = state.Current.Length
+    let newCurrent =
+        if Range1d.containsValue pixel sprite then
+            state.Current + "#"
         else
-            state.SignalStrengths
-    
-    {
-        Cycle = newCycle
-        X = newX
-        SignalStrengths = newSignalStrengths
-    }
-            
+            state.Current + "."
+    if newCurrent.Length = 40 then
+        {
+            X = newX
+            Cycle = newCycle
+            Current = ""
+            Lines = List.append state.Lines [ newCurrent ]
+        }
+    else
+        {
+            X = newX
+            Cycle = newCycle
+            Current = newCurrent
+            Lines = state.Lines
+        }
     
 let finalState = List.fold executeInstruction initialState simplifiedInstructions 
 
-let sum = List.sum finalState.SignalStrengths
-
-printfn "Sum: %i" sum
+List.iter (fun line -> printfn "%s" line) finalState.Lines
 
 let x = 0
