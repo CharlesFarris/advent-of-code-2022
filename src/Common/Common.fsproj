@@ -7,8 +7,8 @@
 
     <ItemGroup>
         <Compile Include="Library.fs" />
-        <Compile Include="Range.fs" />
-        <Compile Include="Point2d.fs" />
+        <Compile Include="Range1d.fs" />
+        <Compile Include="Geometry.fs" />
     </ItemGroup>
 
 </Project>
