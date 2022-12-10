@@ -1,7 +1,7 @@
 ﻿open System.IO
 
 let instructions =
-    ".\\test_data.txt"
+    ".\\part1_data.txt"
     |> File.ReadAllLines
     |> Seq.toList
     
