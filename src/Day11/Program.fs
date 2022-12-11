@@ -1,6 +1,7 @@
-﻿open System.IO
+open System.IO
+open Microsoft.FSharp.Core
 
-let instructions = ".\\part1_data.txt" |> File.ReadAllLines |> Seq.toList
+let instructions = ".\\test_data.txt" |> File.ReadAllLines |> Seq.toList
 
 let chunks = instructions |> List.chunkBySize 7
 
@@ -131,7 +132,7 @@ let handleRound (state: State) (round: int) =
     let newState = { state with Monkeys = newMonkeys }
     printfn "Round: %i" round
     for m in newState.Monkeys do
-        (printfn "Monkey %i: %A" m.Header.Id m.Items)
+        (printfn "Monkey %i: %i %A" m.Header.Id m.Inspections m.Items)
     newState
     
 let finalState = rounds |> List.fold handleRound initialState
