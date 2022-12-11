@@ -1,7 +1,7 @@
 open System.IO
 open Microsoft.FSharp.Core
 
-let instructions = ".\\test_data.txt" |> File.ReadAllLines |> Seq.toList
+let instructions = ".\\part1_data.txt" |> File.ReadAllLines |> Seq.toList
 
 let chunks = instructions |> List.chunkBySize 7
 
@@ -19,19 +19,19 @@ type Header =
       Left: string
       Right: string
       Operation: Operator
-      Divisor: int
+      Divisor: decimal
       TrueTarget: int
       FalseTarget: int }
 
 type Monkey =
     { Header: Header
-      Items: int list
+      Items: decimal list
       Inspections: int }
 
-let CatchItem (item: int) (monkey: Monkey) : Monkey =
+let CatchItem (item: decimal) (monkey: Monkey) : Monkey =
     { monkey with Items = [item ] |> List.append monkey.Items }
 
-let ThrowItem (tuple: int * int) (monkeys: Monkey list) : Monkey list =
+let ThrowItem (tuple: decimal * int) (monkeys: Monkey list) : Monkey list =
     let item = fst tuple
     let target = snd tuple
     [ for monkey in monkeys ->
@@ -51,7 +51,7 @@ let parseChunk (acc: Monkey list) (chunk: string list) : Monkey list =
     let simplifiedChunk = chunk |> List.map (fun l -> l[l.LastIndexOf(':') + 1 ..])
 
     let startingItems =
-        simplifiedChunk[ 1 ].Split [| ',' |] |> Array.toList |> List.map int
+        simplifiedChunk[ 1 ].Split [| ',' |] |> Array.toList |> List.map decimal
 
     let tokens = (simplifiedChunk[2][7..]).Split [| ' ' |]
     let left = tokens[0]
@@ -63,7 +63,7 @@ let parseChunk (acc: Monkey list) (chunk: string list) : Monkey list =
         | "*" -> Multiplication
         | _ -> invalidOp "Unknown operation"
 
-    let divisor = int (simplifiedChunk[3][13..])
+    let divisor = decimal (simplifiedChunk[3][13..])
     let trueTarget = int (simplifiedChunk[4][16..])
     let falseTarget = int (simplifiedChunk[5][16..])
 
@@ -82,6 +82,8 @@ let parseChunk (acc: Monkey list) (chunk: string list) : Monkey list =
 
 let monkeys = chunks |> List.fold parseChunk [] |> List.rev
 
+let lcd = monkeys |> List.map (fun m -> m.Header.Divisor) |> List.reduce (fun acc elem -> acc * elem)
+
 type State =
     { Round: int
       CurrentMonkey: int
@@ -92,37 +94,37 @@ let initialState =
       CurrentMonkey = 0
       Monkeys = monkeys }
 
-let evaluateItem (item: int) (header: Header) : (int * int) =
+let evaluateItem (item: decimal) (header: Header) : decimal * int =
     let leftValue =
         match header.Left with
         | "old" -> item
-        | _ -> int header.Left
+        | _ -> decimal header.Left
 
     let rightValue =
         match header.Right with
         | "old" -> item
-        | _ -> int header.Right
+        | _ -> decimal header.Right
 
     let inspectionLevel =
         match header.Operation with
         | Addition -> leftValue + rightValue
         | Multiplication -> leftValue * rightValue
-    let newItem = int (floor (decimal inspectionLevel / 3M))  
+    let newItem = inspectionLevel % lcd  
 
     let remainder = newItem % header.Divisor   
-    if remainder = 0 then
+    if remainder = 0M then
         (newItem, header.TrueTarget)
     else
         (newItem,header.FalseTarget)
 
-let rounds = [ for i in 1..20 -> i ]
+let rounds = [ for i in 1..10000 -> i ]
 
 let handleTurn (monkeys: Monkey list) (current: int) : Monkey list =
     let monkey = monkeys[current]
     let items = monkey.Items
     let inspections = monkey.Inspections + items.Length
     let currentMonkeys = [ for m in monkeys -> if m.Header.Id = current then { m with Items=[]; Inspections=inspections } else m ]
-    let handleItem (localMonkeys: Monkey list) (item: int) : Monkey list =
+    let handleItem (localMonkeys: Monkey list) (item: decimal) : Monkey list =
         let tuple = monkey.Header |> evaluateItem item
         localMonkeys |> ThrowItem tuple
     items |> List.fold handleItem currentMonkeys 
@@ -139,4 +141,5 @@ let finalState = rounds |> List.fold handleRound initialState
 
 let inspections = finalState.Monkeys |> List.map (fun m -> m.Inspections) |> List.sort |> List.rev
 
-printfn "Monkey Business: %i" (inspections[0] * inspections[1])
+let product = (decimal inspections[0]) * (decimal inspections[1])
+printfn "Monkey Business: %M" product
