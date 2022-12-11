@@ -1,7 +1,6 @@
-﻿open System
-open System.IO
+﻿open System.IO
 
-let instructions = ".\\test_data.txt" |> File.ReadAllLines |> Seq.toList
+let instructions = ".\\part1_data.txt" |> File.ReadAllLines |> Seq.toList
 
 let chunks = instructions |> List.chunkBySize 7
 
