@@ -10,7 +10,7 @@ let mapFun (c: char) : int =
     | 'E' -> endValue
     | _ -> int c - 97
     
-let map = readMap ".\\test_data.txt" mapFun
+let map = readMap ".\\part1_data.txt" mapFun
 
 printfn "%A" map
 

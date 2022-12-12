@@ -1,9 +1,8 @@
 ﻿module Map2d
 
-open System.Collections.Generic
 open System.IO
-open System.Runtime.InteropServices
 open Microsoft.FSharp.Collections
+open Microsoft.FSharp.Core
 
 type Cell = { Row: int; Column: int }
 
@@ -81,19 +80,22 @@ let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> C
         not (path.Cells |> List.contains cell)
         
     let mutable paths = [ { Cells = [ startCell ] } ]
-    let mutable foundPaths = []
+    let mutable foundPaths : Path list = []
+    let mutable visited : Cell list = [ startCell ]
     while paths.Length > 0 do
         //paths |> printPaths
+        //visited |> printCells "visited"
         let current = paths.Head
         //current |> printPath
         paths <- paths.Tail
         let last = current.Cells.Head
         let adjacentCells = getAdjacentCells map last
         //adjacentCells |> printCells "adjacent"
-        let notVisitedCells = adjacentCells |> List.filter (notVisited current)
+        let notVisitedCells = adjacentCells |> List.filter (fun c -> not (visited |> List.contains c))
         //notVisitedCells |> printCells "not visited"
         let canMoveCells = notVisitedCells |> List.filter (canMove map last)
         //canMoveCells |> printCells "can move"
+        visited <- visited |> List.append canMoveCells
         let newPaths =
             canMoveCells |> List.map (fun c -> { current with Cells = current.Cells |> List.append [ c ] })
         let completePaths = newPaths |> List.filter (fun p -> p.Cells.Head = endCell)
@@ -102,7 +104,7 @@ let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> C
         paths <-
             match incompletePaths.Length with
             | 0 -> paths
-            | _ -> paths |> List.append incompletePaths
+            | _ -> incompletePaths |> List.append paths
 
     foundPaths |> printPaths
     foundPaths
