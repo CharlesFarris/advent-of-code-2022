@@ -14,10 +14,10 @@ let map = readMap ".\\part1_data.txt" mapFun
 
 printfn "%A" map
 
-let startCell = findCellsByValue map startValue |> List.exactlyOne
+let startCells = findCellsByValue map startValue |> List.append (findCellsByValue map 0)
 let endCell = findCellsByValue map endValue |> List.exactlyOne
 
-printfn "Start: %A" startCell
+printfn "Start: %A" startCells
 printfn "End: %A" endCell
 
 let canMove (map: Map2d) (startCell: Cell) (endCell: Cell)  : bool =
@@ -26,6 +26,12 @@ let canMove (map: Map2d) (startCell: Cell) (endCell: Cell)  : bool =
     let delta = endValue - startValue
     delta <= 1
     
-let path = Map2d.findPath map startCell endCell canMove
+let paths =
+    startCells
+    |> List.map (fun c -> findPath map c endCell canMove)
+    |> List.map (fun o ->
+        match o with
+        | Some p -> p.Cells.Length - 1
+        | None -> 2147483647 )
 
-printfn "Length: %i" (path.Cells.Length - 1)
+printfn "Length: %i" (paths |> List.min)

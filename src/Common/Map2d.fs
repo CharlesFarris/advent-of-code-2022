@@ -1,4 +1,4 @@
-﻿module Map2d
+module Map2d
 
 open System.IO
 open Microsoft.FSharp.Collections
@@ -74,7 +74,7 @@ let printPaths (paths: Path list) =
     paths |> List.iter printPath
     printfn ""
 
-let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> Cell -> Cell -> bool) : Path =
+let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> Cell -> Cell -> bool) : Path option =
     
     let notVisited (path: Path) (cell: Cell) : bool =
         not (path.Cells |> List.contains cell)
@@ -107,6 +107,9 @@ let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> C
             | _ -> incompletePaths |> List.append paths
 
     foundPaths |> printPaths
-    foundPaths
-        |> List.sortBy (fun p -> p.Cells.Length)
-        |> List.head
+    if foundPaths.IsEmpty then
+        None
+    else
+        Some (foundPaths
+            |> List.sortBy (fun p -> p.Cells.Length)
+            |> List.head)
