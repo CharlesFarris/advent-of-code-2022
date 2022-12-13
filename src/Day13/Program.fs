@@ -111,7 +111,7 @@ let rec parseItem (line: string) : Item =
     item
 
 let packets =
-    ".\\test_data.txt"
+    ".\\part1_data.txt"
     |> File.ReadAllLines
     |> Seq.toList
     |> List.filter (fun l -> not (String.IsNullOrWhiteSpace(l)))
