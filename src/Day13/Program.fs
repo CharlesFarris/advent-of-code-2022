@@ -96,58 +96,48 @@ let rec parseItem (line: string) : Item =
         | StateItem -> invalidOp "Bad item state"
         | StateNumber -> [ finalParser.Current ] |> List.append finalParser.Values
 
-    printfn "%A" finalParser
+    //printfn "%A" finalParser
 
     let item =
-            ItemList(
-                [ for value in values ->
-                      if value = "" then ItemList([])
-                      elif value.StartsWith "[" then parseItem value
-                      elif value.StartsWith "#" then ItemInteger(int value[1..])
-                      else invalidOp "Bad Value" ]
-            )
+        ItemList(
+            [ for value in values ->
+                  if value = "" then ItemList([])
+                  elif value.StartsWith "[" then parseItem value
+                  elif value.StartsWith "#" then ItemInteger(int value[1..])
+                  else invalidOp "Bad Value" ]
+        )
 
-    printfn "%A" item
+    //printfn "%A" item
     item
-
-let packets =
-    ".\\part1_data.txt"
-    |> File.ReadAllLines
-    |> Seq.toList
-    |> List.filter (fun l -> not (String.IsNullOrWhiteSpace(l)))
-    |> List.chunkBySize 2
-    |> List.map (fun lines ->
-        { Left = parseItem lines[0]
-          Right = parseItem lines[1] })
-
-printfn "%A" packets
 
 type OrderState =
     | Indeterminate
     | Correct
     | Incorrect
-    
+
 let rec compareItems (left: Item) (right: Item) : OrderState =
     match left, right with
     | ItemInteger leftInt, ItemInteger rightInt ->
-        if leftInt < rightInt then
-            Correct
-        elif leftInt = rightInt then
-            Indeterminate
+        if leftInt < rightInt then Correct
+        elif leftInt = rightInt then Indeterminate
         else Incorrect
     | ItemInteger _, ItemList _ -> compareItems (ItemList [ left ]) right
     | ItemList _, ItemInteger _ -> compareItems left (ItemList[right])
 
     | ItemList leftList, ItemList rightList ->
         let length = max leftList.Length rightList.Length
+
         let ll =
             if leftList.Length < length then
-               [ for i in 1..(length - leftList.Length) -> None ] |> List.append (leftList |> List.map Some)
+                [ for i in 1 .. (length - leftList.Length) -> None ]
+                |> List.append (leftList |> List.map Some)
             else
                 leftList |> List.map Some
+
         let rl =
             if rightList.Length < length then
-                [ for i in 1..(length - rightList.Length) -> None ] |> List.append (rightList |> List.map Some)
+                [ for i in 1 .. (length - rightList.Length) -> None ]
+                |> List.append (rightList |> List.map Some)
             else
                 rightList |> List.map Some
 
@@ -157,16 +147,13 @@ let rec compareItems (left: Item) (right: Item) : OrderState =
             | None, Some _ -> Correct
             | Some _, None -> Incorrect
             | None, None -> invalidOp "Invalid state"
-           
+
         let results = List.map2 compareItemsOptional ll rl
         let correctIndex = results |> List.tryFindIndex (fun r -> r = Correct)
         let incorrectIndex = results |> List.tryFindIndex (fun r -> r = Incorrect)
+
         match correctIndex, incorrectIndex with
-        | Some ci, Some ii ->
-            if ci < ii then
-                Correct
-            else
-                Incorrect
+        | Some ci, Some ii -> if ci < ii then Correct else Incorrect
         | Some ci, None -> Correct
         | None, Some ii -> Incorrect
         | None, None -> Indeterminate
@@ -178,11 +165,27 @@ let checkPacketOrder (tuple: int * Packet) : OrderState =
     let packet = snd tuple
     compareItems packet.Left packet.Right
 
-let indices =
-    packets
-    |> List.indexed
-    |> List.filter (fun t -> checkPacketOrder t = Correct)
-    |> List.map (fun t -> fst t + 1)
+let lines =
+    ".\\part1_data.txt"
+    |> File.ReadAllLines
+    |> Seq.toList
+    |> List.filter (fun l -> not (String.IsNullOrWhiteSpace(l)))
 
-printfn "Indices: %A" indices
-printfn "Sum: %i" (indices |> List.sum)
+let key1 = "[[2]]" |> parseItem
+let key2 = "[[6]]" |> parseItem
+
+let items = lines |> List.map parseItem |> List.append [ key1; key2 ]
+
+let comparer (left: Item) (right: Item) : int =
+    match compareItems left right with
+    | Correct -> -1
+    | Incorrect -> 1
+    | Indeterminate -> 0
+
+let sortedItems = items |> List.sortWith comparer
+
+let index1 = sortedItems |> List.findIndex (fun i -> i = key1)
+let index2 = sortedItems |> List.findIndex (fun i -> i = key2)
+let decoderKey = (index1 + 1) * (index2 + 1)
+
+printfn "%i" decoderKey
