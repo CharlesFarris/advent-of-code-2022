@@ -11,7 +11,7 @@ let parsePaths (paths: Cell list list) (line: string) : Cell list list =
     [ line |> parsePath ] |> List.append paths
     
 let paths =
-    ".\\test_data.txt"
+    ".\\part1_data.txt"
     |> File.ReadAllLines
     |> Seq.toList
     |> List.fold parsePaths []
