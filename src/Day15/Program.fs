@@ -26,90 +26,118 @@ let parseLine (line: string) : Sensor =
 let sensorData =
     File.ReadLines ".\\part1_data.txt" |> Seq.toList |> List.map parseLine
 
-let y = 2000000
-
-let computeRange (y: int) (sensor: Sensor) : Range1d option =
-    let result = Point2d.solveManhattanDistance sensor.Position y sensor.Distance
-
-    match result with
-    | Some range ->
-        let d1 = Point2d.manhattanDistance sensor.Position { X = range.Start; Y = y }
-        let d2 = Point2d.manhattanDistance sensor.Position { X = range.End; Y = y }
-        printfn "%i %i = %i" d1 d2 sensor.Distance
-    | None -> printfn "None"
-
-    result
-
-let ranges =
-    sensorData
-    |> List.map (computeRange y)
-    |> List.filter (fun ro ->
-        match ro with
-        | Some _ -> true
-        | None -> false)
-    |> List.map (fun ro ->
-        let empty = Range1d.create 0 0
-
-        match ro with
-        | Some r -> r
-        | None -> empty)
-
 type State =
     { Ranges: Range1d list
-      Merged: Range1d list }
+      Merged: Range1d list
+      Y: int }
 
-let unionRange (ranges: Range1d list) : Range1d =
-    let startValue = ranges |> List.map (fun r -> min r.Start r.End) |> List.min
-    let endValue = ranges |> List.map (fun r -> max r.Start r.End) |> List.max
-    Range1d.create startValue endValue
+let computeState (y: int) : State =
 
-let findIntersecting (range: Range1d) (ranges: Range1d list) : Range1d list =
-    ranges |> List.filter (Range1d.isIntersecting range)
+    let computeRange (y: int) (sensor: Sensor) : Range1d option =
+        let result = Point2d.solveManhattanDistance sensor.Position y sensor.Distance
 
-let rec mergeRanges (state: State) : State =
-    if state.Ranges.Length = 0 then
-        state
-    else
-        let head = state.Ranges.Head
-        let tail = state.Ranges.Tail
+        // match result with
+        // | Some range ->
+        //     let d1 = Point2d.manhattanDistance sensor.Position { X = range.Start; Y = y }
+        //     let d2 = Point2d.manhattanDistance sensor.Position { X = range.End; Y = y }
+        //     printfn "%i %i = %i" d1 d2 sensor.Distance
+        // | None -> printfn "None"
 
-        let newMerged =
-            if state.Merged.Length = 0 then
-                [ head ]
-            else
-                let intersecting = findIntersecting head state.Merged
+        result
 
-                if intersecting.Length = 0 then
-                    [ head ] |> List.append state.Merged
+    let ranges =
+        sensorData
+        |> List.map (computeRange y)
+        |> List.filter (fun ro ->
+            match ro with
+            | Some _ -> true
+            | None -> false)
+        |> List.map (fun ro ->
+            let empty = Range1d.create 0 0
+
+            match ro with
+            | Some r -> r
+            | None -> empty)
+
+    let unionRange (ranges: Range1d list) : Range1d =
+        let startValue = ranges |> List.map (fun r -> min r.Start r.End) |> List.min
+        let endValue = ranges |> List.map (fun r -> max r.Start r.End) |> List.max
+        Range1d.create startValue endValue
+
+    let findIntersecting (range: Range1d) (ranges: Range1d list) : Range1d list =
+        ranges |> List.filter (Range1d.isIntersecting range)
+
+    let rec mergeRanges (state: State) : State =
+        if state.Ranges.Length = 0 then
+            state
+        else
+            let head = state.Ranges.Head
+            let tail = state.Ranges.Tail
+
+            let newMerged =
+                if state.Merged.Length = 0 then
+                    [ head ]
                 else
-                    let union = unionRange ([ head ] |> List.append intersecting)
+                    let intersecting = findIntersecting head state.Merged
 
-                    let nonIntersecting =
-                        state.Merged |> List.filter (fun r -> not (intersecting |> List.contains r))
+                    if intersecting.Length = 0 then
+                        [ head ] |> List.append state.Merged
+                    else
+                        let union = unionRange ([ head ] |> List.append intersecting)
 
-                    [ union ] |> List.append nonIntersecting
+                        let nonIntersecting =
+                            state.Merged |> List.filter (fun r -> not (intersecting |> List.contains r))
 
-        let newState =
-            { state with
-                Ranges = tail
-                Merged = newMerged }
+                        [ union ] |> List.append nonIntersecting
 
-        mergeRanges newState
+            let newState =
+                { state with
+                    Ranges = tail
+                    Merged = newMerged }
 
-let initialState = { Ranges = ranges; Merged = [] }
+            mergeRanges newState
 
-let finalState = initialState |> mergeRanges
+    let initialState = { Ranges = ranges; Merged = []; Y = y}
 
-let beaconPositions =
-    sensorData
-    |> List.filter (fun s -> s.Beacon.Y = y)
-    |> List.map (fun s -> s.Beacon.X)
-    |> List.distinct
+    initialState |> mergeRanges
     
-let overlappingBeacons =
-    beaconPositions
-    |> List.filter (fun x -> finalState.Merged |> List.exists (Range1d.containsValue x))
+let startX = 0
+let startY = 0
+let endX = 4000000
+let endY = 4000000
+let rangeX = Range1d.create startX endX
 
-let sum = finalState.Merged |> List.map Range1d.size |> List.sum
+let isGoodState (state: State) : bool =
+    not (state.Merged |> List.forall (fun r -> Range1d.containsRange r rangeX))
+    
+let states =
+    [ for y in startY..endY -> computeState y ]
+    |> List.filter isGoodState
 
-printfn "sum: %A" (sum - overlappingBeacons.Length)
+let containsValue (value: int) (ranges: Range1d list) : bool =
+    ranges |> List.exists (fun r -> Range1d.containsValue value r)
+    
+let getLocations (state: State) (startX: int) (endX: int) : Point2d list =
+    if state.Merged.Length = 1 then
+        []
+    else
+        let points = [ for x in startX..endX -> { X = x; Y = state.Y } ]
+        let possibles = points |> List.filter (fun p -> not (state.Merged |> containsValue p.X))
+        possibles
+    
+let allPossibles =
+    states
+    |> List.fold (fun acc elem -> acc |> List.append (getLocations elem startX endX) ) [] 
+
+let beacon =
+    if allPossibles.Length = 1 then
+        allPossibles.Head
+    else
+        invalidOp "Invalid number of possibles"
+
+let scalar: int64  = 4000000
+let frequency = scalar * (int64 beacon.X)  + (int64 beacon.Y)
+
+printfn "Frequency: %i" frequency
+
+let x = 0    
