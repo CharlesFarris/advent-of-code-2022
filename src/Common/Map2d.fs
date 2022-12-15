@@ -12,6 +12,13 @@ type Map2d = {
     Values: int[,]
 }
 
+let createMap (rows: int) (columns: int) : Map2d =
+    {
+        Rows = rows
+        Columns = columns
+        Values = Array2D.init rows columns (fun i j -> 0) 
+    }
+    
 let readMap (path : string) (mapFun: char -> int) : Map2d =
     let input =
         path
@@ -55,6 +62,10 @@ let getValue (map: Map2d) (cell: Cell) =
         map.Values[cell.Row, cell.Column]
     else
         invalidOp "Invalid cell"
+        
+let setValue (map: Map2d) (cell: Cell) (value: int) =
+    let newValues = map.Values |> Array2D.mapi (fun r c v -> if cell.Row = r && cell.Column = c then value else v)
+    {map with Values = newValues}
 
 type Path = {
     Cells : Cell list
@@ -113,3 +124,7 @@ let findPath (map: Map2d) (startCell: Cell) (endCell: Cell) (canMove: Map2d -> C
         Some (foundPaths
             |> List.sortBy (fun p -> p.Cells.Length)
             |> List.head)
+
+let parseCell (line: string) : Cell =
+    let tokens = line.Split [| ',' |]
+    { Row = int tokens[0]; Column = int tokens[1] }
