@@ -24,9 +24,9 @@ let parseLine (line: string) : Sensor =
       Distance = Point2d.manhattanDistance position beacon }
 
 let sensorData =
-    File.ReadLines ".\\test_data.txt" |> Seq.toList |> List.map parseLine
+    File.ReadLines ".\\part1_data.txt" |> Seq.toList |> List.map parseLine
 
-let y = 10
+let y = 2000000
 
 let computeRange (y: int) (sensor: Sensor) : Range1d option =
     let result = Point2d.solveManhattanDistance sensor.Position y sensor.Distance
