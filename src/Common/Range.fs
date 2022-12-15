@@ -11,6 +11,9 @@ module Range1d =
             { Start = s; End = e }
         else
             { Start = e; End = s }
+            
+    let fromTuple (t: int * int) : Range1d =
+        create (fst t) (snd t)
 
     /// <summary>
     /// Orders a range.
@@ -84,3 +87,10 @@ module Range1d =
         { Start = r1.Start + offset
           End = r1.End + offset }
         
+    /// <summary>
+    /// Computes the size of a range.
+    /// </summary>
+    /// <param name="r1"></param>
+    let size (r1 : Range1d) : int =
+        let or1 = order r1
+        or1.End - or1.Start + 1
