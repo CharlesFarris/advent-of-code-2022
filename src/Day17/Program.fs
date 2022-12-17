@@ -4,7 +4,7 @@ open Geometry
 open Microsoft.FSharp.Core
 
 let jets =
-    File.ReadAllText ".\\test_data.txt"
+    File.ReadAllText ".\\part1_data.txt"
     |> Seq.toList
     |> List.map (fun c -> if c = '>' then 1 else -1)
 
@@ -147,10 +147,10 @@ let collideWithChamber (chamber: Chamber) (rock: Rock) : bool =
 
 let updateRock (state: State) : State =
     let jet = state.Jets[state.JetIndex]
-    match jet with
-    | -1 -> printfn "Left"
-    | 1 -> printfn "Right"
-    | _ -> invalidOp "bad jet"
+    // match jet with
+    // | -1 -> printfn "Left"
+    // | 1 -> printfn "Right"
+    // | _ -> invalidOp "bad jet"
 
     let newJetIndex =
         if state.JetIndex = (jets.Length - 1) then
