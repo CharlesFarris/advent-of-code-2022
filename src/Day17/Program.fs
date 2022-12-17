@@ -1,5 +1,4 @@
-﻿open System
-open System.IO
+﻿open System.IO
 open Geometry
 open Microsoft.FSharp.Core
 
@@ -102,17 +101,31 @@ let moveRock (dx: int) (dy: int) (rock: Rock) : Rock =
         Bottom = rock.Bottom + dy
         Top = rock.Top + dy}
 
-let placePoint (blocks: int[,]) (p: Point2d) : int[,] =
-    blocks[p.X, p.Y] <- 1
+let placePoint (value: int) (blocks: int[,]) (p: Point2d) : int[,] =
+    blocks[p.X, p.Y] <- value
     blocks
     
 let placeRock (rock: Rock) (chamber: Chamber) : Chamber =
     let height = 1 + (rock.Points |> List.map (fun p -> p.Y) |> List.max) 
-    let newBlocks = rock.Points |> List.fold placePoint (chamber |> expandBlocks height)
+    let newBlocks = rock.Points |> List.fold (fun b p -> placePoint (rock.Index + 1) b p) (chamber |> expandBlocks height)
     { chamber with Blocks = newBlocks ; Height = max height chamber.Height}
 
+type DropState =
+    {
+        RockIndex : int
+        JetIndex : int
+        Top: int[]
+    }
+    
+type ChamberState =
+    {
+        Count: int
+        Height: int
+        DropState: DropState
+    }
+    
 type RockState =
-    | None
+    | NoRock
     | Falling
 
 type State =
@@ -122,7 +135,8 @@ type State =
       RockState: RockState
       Count: int
       Rock: Rock
-      Chamber: Chamber }
+      Chamber: Chamber
+      ChamberStates: ChamberState list }
 
 let startingChamber = { Blocks = Array2D.zeroCreate 7 8; Height = 0 }
 
@@ -135,15 +149,28 @@ let dropNextRock (state: State) : State =
     let y = state.Chamber.Height + 3
     let x = 2
     let rock = getRock rockIndex |> moveRock x y
+    
+    let top =
+        if state.Chamber.Height = 0 then
+            Array.create 7 0
+        else
+            state.Chamber.Blocks[*, state.Chamber.Height - 1]
+            
+    let chamberState = {
+        Count = state.Count + 1
+        Height = state.Chamber.Height
+        DropState = { RockIndex = rockIndex; JetIndex = state.JetIndex; Top = top }
+    }
 
     { state with
         Count = state.Count + 1
         RockIndex = rockIndex
         Rock = rock
-        RockState = Falling }
+        RockState = Falling
+        ChamberStates = [chamberState] |> List.append state.ChamberStates }
     
 let collideWithChamber (chamber: Chamber) (rock: Rock) : bool =
-    rock.Points |> List.exists (fun p -> chamber.Blocks[p.X, p.Y] = 1)
+    rock.Points |> List.exists (fun p -> chamber.Blocks[p.X, p.Y] > 0)
 
 let updateRock (state: State) : State =
     let jet = state.Jets[state.JetIndex]
@@ -170,7 +197,7 @@ let updateRock (state: State) : State =
     
     if rock3.Bottom = -1 || rock3 |> collideWithChamber state.Chamber then
         let newChamber = state.Chamber |> placeRock rock2
-        { state with JetIndex = newJetIndex; Rock = EmptyRock; RockState = None; Chamber = newChamber }
+        { state with JetIndex = newJetIndex; Rock = EmptyRock; RockState = NoRock; Chamber = newChamber }
     else
         // rock2
         { state with JetIndex = newJetIndex; Rock = rock3 }
@@ -179,7 +206,7 @@ let visualizeState (blocks: int[,]) (rock: Rock) (height: int): unit =
     let w = blocks |> Array2D.length1
     let h = blocks |> Array2D.length2
     let array =
-        Array2D.init w h (fun x y -> match blocks[x, y] with |0 -> "." | _ -> "#")
+        Array2D.init w h (fun x y -> match blocks[x, y] with |0 -> "." | _ -> string blocks[x,y])
     
     for p in rock.Points do
         array[p.X, p.Y] <- "@"
@@ -197,12 +224,14 @@ let initialState =
     { JetIndex = 0
       Jets = jets
       RockIndex = -1
-      RockState = None
+      RockState = NoRock
       Count = 0
       Rock = EmptyRock
-      Chamber = startingChamber }
+      Chamber = startingChamber
+      ChamberStates = []
+    }
 
-let maxCount = 2022
+let maxCount = 8192
 
 let rec RunSimulation (state: State) : State =
     if state.Count > maxCount then
@@ -210,11 +239,38 @@ let rec RunSimulation (state: State) : State =
     else
         let newState =
             match state.RockState with
-            | None -> dropNextRock state
+            | NoRock -> dropNextRock state
             | Falling -> updateRock state
         //visualizeState newState.Chamber.Blocks newState.Rock newState.Chamber.Height
         newState |> RunSimulation
 
 let finalState = initialState |> RunSimulation
 
-printfn "%i" finalState.Chamber.Height
+let startIndex = 512
+
+let startHeight = finalState.ChamberStates[startIndex - 1].Height
+let tail = finalState.ChamberStates[startIndex..]
+let startState = tail.Head
+
+let nextIndex = (tail.Tail |> List.findIndex (fun cs -> cs.DropState = startState.DropState)) + startIndex + 1
+
+let width = nextIndex - startIndex
+
+let nextState = finalState.ChamberStates[nextIndex - 1]
+
+printfn "%A %A %A" finalState.ChamberStates[startIndex] finalState.ChamberStates[startIndex + width] finalState.ChamberStates[startIndex + 2 * width] 
+
+let deltaCount = int64 nextState.Count - int64 startState.Count
+let deltaHeight = int64 nextState.Height - int64 startState.Height
+
+let desiredCount = int64 2022
+let periodicCount = desiredCount - int64 startIndex
+
+let periods = (periodicCount / deltaCount)
+let remainder = periodicCount % deltaCount
+
+let remainderHeight = tail[startIndex + int remainder].Height - startHeight
+
+let height = int64 finalState.ChamberStates[startIndex].Height + (periods * deltaHeight) // + int64 remainderHeight
+
+printfn "Height: %i" height
