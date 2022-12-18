@@ -94,3 +94,4 @@ module Range1d =
     let size (r1 : Range1d) : int =
         let or1 = order r1
         or1.End - or1.Start + 1
+        
