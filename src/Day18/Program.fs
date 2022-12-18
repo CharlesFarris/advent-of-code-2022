@@ -139,7 +139,7 @@ let isInside (box: BoundingBox) (cube: Cube) : bool =
     && box.Y |> Range1d.containsValue cube.Y
     && box.Z |> Range1d.containsValue cube.Z
 
-let getPlanarAdjacent (cube: Cube) : Cube list =
+let getAdjacent (cube: Cube) : Cube list =
     [ { X = cube.X - 1
         Y = cube.Y
         Z = cube.Z }
@@ -151,61 +151,41 @@ let getPlanarAdjacent (cube: Cube) : Cube list =
         Z = cube.Z }
       { X = cube.X
         Y = cube.Y + 1
-        Z = cube.Z } ]
+        Z = cube.Z }
+      { X = cube.X
+        Y = cube.Y
+        Z = cube.Z + 1 }
+      { X = cube.X
+        Y = cube.Y
+        Z = cube.Z - 1 } ]
 
-let printArray (array: int[,]) : unit =
-    let startX = array |> Array2D.base1
-    let startY = array |> Array2D.base2
-    let lengthX = array |> Array2D.length1
-    let lengthY = array |> Array2D.length2
-
-    for y = startY + lengthY - 1 downto startY do
-        for x = startX to startX + lengthX - 1 do
-            match array[x, y] with
-            | 1 -> printf "#"
-            | -1 -> printf "@"
-            | _ -> printf "."
-
-        printfn ""
-
-    printfn ""
-
-let checkPlanarAdjacent (box: BoundingBox) (array: int[,]) (stack: Cube list) (cube: Cube) : bool =
+let checkAdjacent (box: BoundingBox) (stack: Cube list) (cubes1: Cube list) (cubes2: Cube list) (cube: Cube) : bool =
     if not (cube |> isInside box) then false
-    elif array[cube.X, cube.Y] <> 0 then false
     elif stack |> List.contains cube then false
+    elif cubes1 |> List.contains cube then false
+    elif cubes2 |> List.contains cube then false
     else true
 
 let mutable exteriorCubes: Cube list = []
 
-for z = box.Z.Start to box.Z.End do
-    let array =
-        Array2D.zeroCreateBased box.X.Start box.Y.Start (box.X |> Range1d.size) (box.Y |> Range1d.size)
+let mutable stack = [ createCube box.X.Start box.Y.Start box.Z.Start ]
 
-    let planarCubes = cubes |> List.where (fun c -> c.Z = z)
+while stack.Length > 0 do
+    let current = stack.Head
+    stack <- stack.Tail
 
-    for pc in planarCubes do
-        array[pc.X, pc.Y] <- 1
+    if
+        not (cubes |> List.contains current)
+        && not (exteriorCubes |> List.contains current)
+    then
+        exteriorCubes <- [ current ] |> List.append exteriorCubes
 
-    let mutable stack = [ createCube box.X.Start box.Y.Start z ]
+    let adjacent =
+        current
+        |> getAdjacent
+        |> List.filter (checkAdjacent box stack cubes exteriorCubes)
 
-    while stack.Length > 0 do
-        let current = stack.Head
-        stack <- stack.Tail
-
-        if array[current.X, current.Y] = 0 then
-            exteriorCubes <- [ current ] |> List.append exteriorCubes
-            array[current.X, current.Y] <- -1
-
-        let adjacent =
-            current
-            |> getPlanarAdjacent
-            |> List.filter (checkPlanarAdjacent box array stack)
-
-        stack <- adjacent |> List.append stack
-        printArray array
-
-
+    stack <- adjacent |> List.append stack
 
 let exc = exteriorCubes |> List.append []
 printfn "%i %i" exteriorCubes.Length exc.Length
@@ -222,29 +202,6 @@ let checkFace (cubes: Cube list) (face: Face) : bool =
 
     cubes |> List.contains adjacent
 
-let exteriorFaces =
-    uncoveredFaces |> List.filter (fun f -> f |> checkFace exc)
+let exteriorFaces = uncoveredFaces |> List.filter (fun f -> f |> checkFace exc)
 
 printfn "Exterior Faces: %i" exteriorFaces.Length
-
-// let mutable allCubes = []
-// for z = box.Z.Start to box.Z.End do
-//     for y = box.Y.Start to box.Y.End do
-//         for x = box.X.Start to box.X.End do
-//             let c = createCube x y z
-//             if cubes |> List.contains c then
-//                 printfn "%A cubes" c
-//             elif exc |> List.contains c then
-//                 printfn "%A exterior" c
-//             else
-//                 printfn "%A interior" c
-//             allCubes <- [ c ] |> List.append allCubes
-//
-// printfn "%i %i %i" allCubes.Length cubes.Length exteriorCubes.Length
-//
-// let interiorCubes =
-//     allCubes
-//     |> List.filter (fun c -> cubes |> List.contains c)
-//     |> List.filter (fun c -> exc |> List.contains c)
-//
-// let x = 0
