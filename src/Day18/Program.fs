@@ -1,5 +1,4 @@
-﻿open System.Diagnostics
-open System.IO
+﻿open System.IO
 
 type Cube = { X: int; Y: int; Z: int }
 
@@ -22,15 +21,7 @@ let parseCube (line: string) : Cube =
       Y = int tokens[1]
       Z = int tokens[2] }
 
-let getAdjacents (cube: Cube) : Cube list =
-    [ createCube (cube.X - 1) cube.Y cube.Z // XN
-      createCube (cube.X + 1) cube.Y cube.Z // XP
-      createCube cube.X (cube.Y - 1) cube.Z // YN
-      createCube cube.X (cube.Y + 1) cube.Z // YP
-      createCube cube.X cube.Y (cube.Z - 1) // ZN
-      createCube cube.X cube.Y (cube.Z + 1) ] // ZP
-
-let cubes = ".\\test_data.txt" |> File.ReadLines |> Seq.toList |> List.map parseCube
+let cubes = ".\\part1_data.txt" |> File.ReadLines |> Seq.toList |> List.map parseCube
 
 let generateFaces (faces: Face list) (cube: Cube) : Face list =
     [ { Id = XN; Cube = cube }
