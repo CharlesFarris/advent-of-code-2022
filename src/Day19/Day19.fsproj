@@ -6,9 +6,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Program.fs"/>
-        <Content Include="test_data.txt" CopyToOutputDirectory="Always"/>
-        <Content Include="part1_data.txt" CopyToOutputDirectory="Always"/>
+        <Compile Include="Types.fs" />
+        <Compile Include="Functions.fs" />
+        <Compile Include="Program.fs" />
+        <Content Include="test_data.txt" CopyToOutputDirectory="Always" />
+        <Content Include="part1_data.txt" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
 </Project>
