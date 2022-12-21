@@ -1,2 +1,18 @@
-﻿// For more information see https://aka.ms/fsharp-console-apps
-printfn "Hello from F#"
+﻿open System.IO
+open Day21
+open Day21.Types
+open Functions
+
+let initialState =
+    ".\\test_data.txt"
+    |> File.ReadAllLines
+    |> Seq.fold parseLine { Numbers = Map.empty; Jobs = [] }
+
+printfn "%A" initialState
+
+let finalState = initialState |> runSimulation
+
+printfn "%A" finalState
+
+let root = finalState.Numbers |> Map.find "root"
+printfn "Root: %i" root

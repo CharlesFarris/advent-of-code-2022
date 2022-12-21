@@ -5,7 +5,7 @@ let data =
     File.ReadLines ".\part1_data.txt" |> List.ofSeq
 
 let index =
-    List.findIndex (String.IsNullOrWhiteSpace) data
+    List.findIndex String.IsNullOrWhiteSpace data
 
 let stackLines = data[.. (index - 2)]
 List.iter (fun l -> printfn "%s" l) stackLines
