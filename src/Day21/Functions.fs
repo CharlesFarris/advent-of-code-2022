@@ -7,7 +7,7 @@ let parseLine (data: State) (line: string) : State =
 
     match tokens.Length with
     | 3 ->
-        let newNumbers = data.Numbers |> Map.add tokens[0] (int tokens[2])
+        let newNumbers = data.Numbers |> Map.add tokens[0] (int64 tokens[2])
 
         { data with Numbers = newNumbers }
     | _ ->
@@ -28,14 +28,14 @@ let parseLine (data: State) (line: string) : State =
 
         { data with Jobs = [ job ] |> List.append data.Jobs }
 
-let doOperation (operation: Operation) (left: int) (right: int) =
+let doOperation (operation: Operation) (left: int64) (right: int64) =
     match operation with
     | Add -> left + right
     | Subtract -> left - right
     | Multiply -> left * right
     | Divide -> left / right
 
-let updateJob (numbers: Map<string, int>) (job: Job) : Job =
+let updateJob (numbers: Map<string, int64>) (job: Job) : Job =
     match job with
     | O o ->
         let leftResult = numbers |> Map.tryFind o.LeftMonkey
@@ -101,13 +101,14 @@ let updateJob (numbers: Map<string, int>) (job: Job) : Job =
                       Number = Some(doOperation p.Operation l r) }
             | None -> P p
         | None, None -> P p
+        | _ -> failwith "invalid state"
 
 let isJobComplete (job: Job) : bool =
     match job with
     | P p -> p.Number |> Option.isSome
     | _ -> false
 
-let mapCompletedJob (job: Job) : string * int =
+let mapCompletedJob (job: Job) : string * int64 =
     match job with
     | P p ->
         match p.Number with
@@ -153,7 +154,7 @@ let printState (state: State) : unit =
     printfn ""
 
 let rec runSimulation (state: State) : State =
-    state |> printState
+    //state |> printState
 
     if state.Numbers |> Map.containsKey "root" then
         state

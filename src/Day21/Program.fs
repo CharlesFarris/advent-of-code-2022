@@ -4,7 +4,7 @@ open Day21.Types
 open Functions
 
 let initialState =
-    ".\\test_data.txt"
+    ".\\part1_data.txt"
     |> File.ReadAllLines
     |> Seq.fold parseLine { Numbers = Map.empty; Jobs = [] }
 

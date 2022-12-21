@@ -17,16 +17,16 @@ type OperationJob =
 type PartialJob =
     { Monkey: string
       LeftMonkey: string
-      Left: int option
+      Left: int64 option
       RightMonkey: string
-      Right: int option
+      Right: int64 option
       Operation: Operation
-      Number: int option }
+      Number: int64 option }
 
 type Job =
     | O of OperationJob
     | P of PartialJob
 
 type State =
-    { Numbers: Map<string, int>
+    { Numbers: Map<string, int64>
       Jobs: Job list }
