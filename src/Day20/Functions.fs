@@ -1,62 +1,46 @@
 ﻿module Day20.Functions
 
-let getValueAt (offset: int) (current: int list) : int =
-    let zeroIndex = current |> List.findIndex (fun i -> i = 0)
-    current[ (zeroIndex + offset) % current.Length ]
-
-let mix (current: int list) (value: int) : int list =
-    if value = 0 then
-        current
+let getRelativeIndex (absoluteIndex: int) (arrangement: (int * int) list) : int =
+    let remainder = absoluteIndex % arrangement.Length
+    if remainder < 0 then
+        remainder + arrangement.Length
     else
-        let index = current |> List.findIndex (fun i -> i = value)
-        let c1 = current |> List.removeAt index
-        if value > 0 then
-            let absoluteIndex = index + value
-            let relativeIndex = absoluteIndex % current.Length
-            let newIndex =
-                if absoluteIndex < current.Length then
-                    relativeIndex
-                else
-                    relativeIndex + 1
-            let c2 = c1 |> List.insertAt newIndex value
-            c2
-        else
-            let absoluteIndex = index + value - 1
-            let relativeIndex = absoluteIndex % current.Length
-            let newIndex =
-                if absoluteIndex < 0 then
-                    relativeIndex + current.Length
-                else
-                    relativeIndex
-            let c2 = c1 |> List.insertAt newIndex value
-            c2
-            
-let mix2 (current: int list) (value: int) : int list =
-    if value = 0 then
-        current
-    else
-        let index = current |> List.findIndex (fun i -> i = value)
-        if value > 0 then
-            let absoluteIndex = index + value
-            let relativeIndex = absoluteIndex % current.Length
-            let targetValue = current[ relativeIndex ]
-            let c1 = current |> List.removeAt index        
-            let newIndex = 1 + (c1 |> List.findIndex (fun i -> i = targetValue))
-            c1 |> List.insertAt newIndex value
-        else
-            let absoluteIndex = index + value
-            let relativeIndex =
-                if absoluteIndex > 0 then
-                    absoluteIndex % current.Length
-                else
-                    absoluteIndex % current.Length + current.Length
-            let targetValue = current[ relativeIndex - 1]
-            let c1 = current |> List.removeAt index        
-            let newIndex = 1 + (c1 |> List.findIndex (fun i -> i = targetValue))
-            c1 |> List.insertAt newIndex value
+        remainder
     
-let printArrangement (current: int list) : unit =
+let getValueAt (absoluteIndex: int) (arrangement: (int * int) list) : int * int =
+    let relativeIndex = arrangement |> getRelativeIndex absoluteIndex
+    arrangement[relativeIndex]
+
+let mix (tuple: int * int) (arrangement: (int * int) list) : (int * int) list =
+    let value = snd tuple
+    if value = 0 then
+        arrangement
+    else
+        let valueIndex =
+            arrangement
+            |> List.findIndex (fun i -> i = tuple)
+        let absoluteIndex =
+            if value >= 0 then 
+                valueIndex + value
+            else
+                valueIndex + value - 1
+        let insertAfterValue =
+            arrangement
+            |> getValueAt absoluteIndex
+        if insertAfterValue = tuple then
+            arrangement
+        else
+            let temporaryArrangement =
+                arrangement |> List.removeAt valueIndex
+
+            let insertAfterValueIndex =
+                temporaryArrangement
+                |> List.findIndex (fun i -> i = insertAfterValue)
+            temporaryArrangement
+                |> List.insertAt (insertAfterValueIndex + 1) tuple
+    
+let printArrangement (current: (int * int) list) : unit =
     for i in current do
-        printf "%i " i
+        printf "%i " (snd i)
     printfn ""
     
