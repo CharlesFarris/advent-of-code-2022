@@ -34,10 +34,17 @@ type Robots =
       ObsidianRobots: int
       GeodeRobots: int }
 
+type RobotLimits = {
+    MaxOreRobots: int
+    MaxClayRobots: int
+    MaxObsidianRobots: int
+    MaxGeodeRobots: int
+}
+
 type State =
     { Time: int
       Resources: Resources
       Robots: Robots
       MaxTime: int
+      Limits: RobotLimits
       Blueprint: Blueprint }
-

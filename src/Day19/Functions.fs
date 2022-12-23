@@ -22,18 +22,22 @@ let collectResources (robots: Robots) (resources: Resources) : Resources =
       Geodes = resources.Geodes + robots.GeodeRobots }
 
 let buyRobot (blueprint: Blueprint) (request: RobotFactoryRequest) (resources: Resources) : Resources =
-    match request with
-    | NoRequest -> resources
-    | OreRobot -> { resources with Ore = resources.Ore - blueprint.OreRobotBlueprint.Ore }
-    | ClayRobot -> { resources with Ore = resources.Ore - blueprint.ClayRobotBlueprint.Ore }
-    | ObsidianRobot ->
-        { resources with
-            Ore = resources.Ore - blueprint.ObsidianRobotBlueprint.Ore
-            Clay = resources.Clay - blueprint.ObsidianRobotBlueprint.Clay }
-    | GeodeRobot ->
-        { resources with
-            Ore = resources.Ore - blueprint.GeodeRobotBlueprint.Ore
-            Obsidian = resources.Obsidian - blueprint.GeodeRobotBlueprint.Obsidian }
+    let newResources =
+        match request with
+        | NoRequest -> resources
+        | OreRobot -> { resources with Ore = resources.Ore - blueprint.OreRobotBlueprint.Ore }
+        | ClayRobot -> { resources with Ore = resources.Ore - blueprint.ClayRobotBlueprint.Ore }
+        | ObsidianRobot ->
+            { resources with
+                Ore = resources.Ore - blueprint.ObsidianRobotBlueprint.Ore
+                Clay = resources.Clay - blueprint.ObsidianRobotBlueprint.Clay }
+        | GeodeRobot ->
+            { resources with
+                Ore = resources.Ore - blueprint.GeodeRobotBlueprint.Ore
+                Obsidian = resources.Obsidian - blueprint.GeodeRobotBlueprint.Obsidian }
+    if newResources.Ore < 0 || newResources.Clay < 0 || newResources.Obsidian < 0 || newResources.Geodes < 0 then
+        invalidOp "bad buy"
+    newResources
 
 let buildRobot (request: RobotFactoryRequest) (robots: Robots) : Robots =
     match request with
@@ -73,6 +77,14 @@ let canBuildObsidianRobot (state: State) : bool =
 let canBuildGeodeRobot (state: State) : bool =
     state.Resources.Ore >= state.Blueprint.GeodeRobotBlueprint.Ore
     && state.Resources.Obsidian >= state.Blueprint.GeodeRobotBlueprint.Obsidian
+    
+let createRobotConstraint (maxOreRobots: int) (maxClaRobots: int) (maxObsidianRobots: int) (maxGeodeRobots: int) : RobotLimits =
+    {
+        MaxOreRobots = maxOreRobots
+        MaxClayRobots = maxClaRobots
+        MaxObsidianRobots = maxObsidianRobots
+        MaxGeodeRobots = maxGeodeRobots
+    }
 
 let runSimulation (request: RobotFactoryRequest) (state: State) : State =
     let newTime = state.Time + 1
@@ -90,12 +102,13 @@ let runSimulation (request: RobotFactoryRequest) (state: State) : State =
             Robots = newRobots
             Resources = newResources }
 
-    newState |> printState
+    newState //|> printState
 
-let startSimulation (maxTime: int) (blueprint: Blueprint) : State =
+let startSimulation (maxTime: int) (blueprint: Blueprint) (limits: RobotLimits): State =
     { Blueprint = blueprint
       Time = 0
       MaxTime = maxTime
+      Limits = limits
 
       Robots =
           { OreRobots = 1
@@ -113,21 +126,19 @@ let evaluateState (state: State) : State list =
     //state |> printState |> ignore
     let mutable states = []
 
-    if state |> canBuildGeodeRobot then
+    if state |> canBuildGeodeRobot && state.Robots.GeodeRobots < state.Limits.MaxGeodeRobots then
         states <- [ state |> runSimulation GeodeRobot ] |> List.append states
+
+    if state |> canBuildObsidianRobot && state.Robots.ObsidianRobots < state.Limits.MaxObsidianRobots then
         states <- [ state |> runSimulation ObsidianRobot ] |> List.append states
 
-    elif state |> canBuildObsidianRobot then
-        states <- [ state |> runSimulation ObsidianRobot ] |> List.append states
+    if state |> canBuildClayRobot && state.Robots.ClayRobots < state.Limits.MaxClayRobots then
         states <- [ state |> runSimulation ClayRobot ] |> List.append states
 
-    elif state |> canBuildClayRobot then
-        states <- [ state |> runSimulation ClayRobot ] |> List.append states
-
-    elif state |> canBuildOreRobot then
+    if state |> canBuildOreRobot && state.Robots.OreRobots < state.Limits.MaxOreRobots then
         states <- [ state |> runSimulation OreRobot ] |> List.append states
 
-    else
+    if states.IsEmpty then
         states <- [ state |> runSimulation NoRequest ] |> List.append states
 
     states
